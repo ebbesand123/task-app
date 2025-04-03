@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useContext, useRef } from "react";
 import Input from "./Input";
 import InputArea from "./InputArea";
 import Modal, { type ModalRefObject } from "./Modal";
+import { ProjectContext } from "../store/ProjectContext";
 
 export type Project = {
   title: string;
@@ -9,11 +10,8 @@ export type Project = {
   dueDate: string;
 };
 
-type NewProjectProps = {
-  onAdd: ({ title, description, dueDate }: Project) => void;
-};
-
-export default function NewProject({ onAdd }: NewProjectProps) {
+export default function NewProject() {
+  const { addProject, cancelAddProject } = useContext(ProjectContext);
   const modalRoot = document.getElementById("modal-root") as HTMLElement;
   const modal = useRef<ModalRefObject>(null);
   const title = useRef<HTMLInputElement>(null);
@@ -25,16 +23,18 @@ export default function NewProject({ onAdd }: NewProjectProps) {
     const enteredDescription = description.current?.value;
     const enteredDueDate = dueDate.current?.value;
 
-    if (
-      typeof enteredTitle === "undefined" ||
-      typeof enteredDescription === "undefined" ||
-      typeof enteredDueDate === "undefined"
+    if (!enteredTitle || !enteredDescription || !enteredDueDate) {
+      modal.current?.open();
+    } else if (
+      enteredTitle.trim() === "" ||
+      enteredDescription.trim() === "" ||
+      enteredDueDate.trim() === ""
     ) {
       modal.current?.open();
     } else {
-      onAdd({
-        title: enteredTitle.trim(),
-        description: enteredDescription.trim(),
+      addProject({
+        title: enteredTitle,
+        description: enteredDescription,
         dueDate: enteredDueDate,
       });
     }
@@ -43,14 +43,21 @@ export default function NewProject({ onAdd }: NewProjectProps) {
   return (
     <>
       <Modal buttonCaption="Close" modalRoot={modalRoot} ref={modal}>
-        <h2>Invalid Input</h2>
-        <p>Oops.. look like you forgot to enter a value.</p>
-        <p>Please make sure you provide a valid value for every input field.</p>
+        <h2 className="text-xl font-bold text-stone-700 my-4">Invalid Input</h2>
+        <p className="text-stone-600 mb-4">
+          Oops.. look like you forgot to enter a value.
+        </p>
+        <p className="text-stone-600 mb-4">
+          Please make sure you provide a valid value for every input field.
+        </p>
       </Modal>
       <div className="w-[35rem] mt-16">
         <menu className="flex items-center justify-end gap-4 my-4">
           <li>
-            <button className="text-stone-800 hover:text-stone-950">
+            <button
+              onClick={() => cancelAddProject()}
+              className="text-stone-800 hover:text-stone-950"
+            >
               Cancel
             </button>
           </li>
